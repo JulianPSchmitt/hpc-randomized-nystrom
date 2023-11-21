@@ -3,6 +3,7 @@ from scipy import linalg
 import scipy
 from hadamard_transform import hadamard_transform
 import torch
+np.random.seed(2002)
 
 
 def rand_nystrom_cholesky(A, Omega, rank):
@@ -11,7 +12,7 @@ def rand_nystrom_cholesky(A, Omega, rank):
     C = A@Omega
     B = Omega.T@C
     L = np.linalg.cholesky(B)
-    Z = linalg.solve_triangular(L, C.T).T
+    Z = linalg.solve_triangular(L, C.T, lower=True).T
     Q, R = np.linalg.qr(Z)
     U_t, Sigma, V_t = scipy.sparse.linalg.svds(R, k=rank)
     U = Q@U_t

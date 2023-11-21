@@ -4,7 +4,7 @@ import pandas as pd
 rng = np.random.default_rng(seed=2002)
 
 
-def build_A_sequential(data, c=1e-4, save=False):
+def build_A_sequential(data, c=10**4, save=False):
     '''
     Function to build A out of a data base using the RBF exp( -|| x i - x j || /
     c) Notice that we only need to fill in the upper triangle part of A since
@@ -14,7 +14,7 @@ def build_A_sequential(data, c=1e-4, save=False):
     A = np.zeros((n, n))
     for j in range(n):
         for i in range(j):
-            A[i, j] = np.exp(-np.linalg.norm(data[i, :] - data[j, :])**2/c)
+            A[i, j] = np.exp(-(np.linalg.norm(data[i, :] - data[j, :])**2)/c)
     A = A + np.transpose(A)
     np.fill_diagonal(A, 1.0)
     if save:
@@ -22,7 +22,7 @@ def build_A_sequential(data, c=1e-4, save=False):
     return A
 
 
-def read_data(filename, size=784, save=True):
+def read_data(filename, size=784, save=False):
     '''
     Read MNIST sparse data from filename and transforms this into a dense
     matrix, each line representing an entry of the database (i.e. a "flattened"
@@ -51,13 +51,13 @@ def read_data(filename, size=784, save=True):
     return data, labels
 
 
-n = 2**13
+n = 2**11
 rank = 200
 l = 600
-sigma = 100
+sigma = 10**4
 
-data, labels = read_data("./data/mnist/mnist_8192", save=False)
-A = build_A_sequential(data, save=True)
+data, labels = read_data("./data/mnist/mnist_780", save=False)
+A = build_A_sequential(data, sigma, save=True)
 Omega = np.random.normal(loc=0.0, scale=1.0, size=[n, l])
 U, Sigma = rns.rand_nystrom_cholesky(A, Omega, rank)
 A_Nystrom = U @ Sigma @ U.T
