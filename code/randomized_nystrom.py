@@ -1,8 +1,6 @@
 import numpy as np
 from scipy import linalg
 import scipy
-from hadamard_transform import hadamard_transform
-import torch
 np.random.seed(2002)
 
 
@@ -24,5 +22,5 @@ def generate_SRHT(l, m):
     matrix"""
     d = np.array([1 if np.random.random() < 0.5 else -1 for i in range(m)])
     omega = np.diag(np.sqrt(m/l)*d)
-    omega = hadamard_transform(torch.from_numpy(omega)).numpy()
-    return omega[np.random.choice(range(m), l, replace=False), :]
+    omega = (linalg.hadamard(m)/np.sqrt(m)) @ omega
+    return omega[np.random.choice(range(m), l, replace=False), :].T
