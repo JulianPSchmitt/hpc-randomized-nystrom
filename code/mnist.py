@@ -58,7 +58,7 @@ sigma = 10**4
 
 data, labels = read_data("./data/mnist/mnist_780", save=False)
 A = build_A_sequential(data, sigma, save=True)
-Omega = np.random.normal(loc=0.0, scale=1.0, size=[n, l])
+Omega = rns.generate_SRHT(l, n)
 U, Sigma = rns.rand_nystrom_cholesky(A, Omega, rank)
 A_Nystrom = U @ Sigma @ U.T
 
