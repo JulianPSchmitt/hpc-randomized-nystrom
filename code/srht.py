@@ -4,7 +4,13 @@ from mpi4py import MPI
 
 
 # Also using random choice, but using scipy hadamard
-def fast_SRHT(l, m, seed=2002):
+def fast_SRHT(l: int, m: int, seed: int = 2002):
+    """
+    Create a sketching matrix Omega with dimensions l x m.
+    l is the sketch dimension of Omega. This uses the
+    Subsampled Randomized Hadamard Transform, and is run
+    on one processor.
+    """
     np.random.seed(seed)
     d = np.array([1 if np.random.random() < 0.5 else -1 for i in range(m)])
     choice = np.random.choice(range(m), l, replace=False)
@@ -13,7 +19,14 @@ def fast_SRHT(l, m, seed=2002):
     return omega[choice, :] * d.reshape([1, -1])
 
 
-def block_SRHT(l, m, comm: MPI.Comm, seed=2002):
+def block_SRHT(l: int, m: int, comm: MPI.Comm, seed=2002):
+    """
+    Create a sketching matrix Omega with dimensions l x m in parallel.
+    l is the sketch dimension of Omega. This uses the Subsampled
+    Randomized Hadamard Transform, and is run on multiple processors,
+    connected using the given "comm". Note that after returning,
+    each processor will have a different submatrix of Omega of size l x (m/p).
+    """
     p = comm.Get_size()
     rank = comm.Get_rank()
 
