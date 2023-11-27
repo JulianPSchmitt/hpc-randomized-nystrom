@@ -1,6 +1,8 @@
 import numpy as np
 import randomized_nystrom as rns
+import srht
 import pandas as pd
+from mpi4py import MPI
 rng = np.random.default_rng(seed=2002)
 
 
@@ -51,16 +53,32 @@ def read_data(filename, size=784, save=False):
     return data, labels
 
 
-n = 2**11
-rank = 200
-l = 600
-sigma = 10**4
+if __name__ == "__main__":
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
 
-data, labels = read_data("./data/mnist/mnist_780", save=False)
-A = build_A_sequential(data, sigma, save=True)
-Omega = rns.generate_SRHT(l, n)
-U, Sigma = rns.rand_nystrom_cholesky(A, Omega, rank)
-A_Nystrom = U @ Sigma @ U.T
+    n = 2**11
+    truncate_rank = 200
+    l = 400
+    sigma = 10**4
 
-print("Nyström via Cholesky:")
-print(np.linalg.norm(A-A_Nystrom, ord='nuc')/np.linalg.norm(A, ord='nuc'))
+    A = None
+    if rank % 2 == 0:
+        data, labels = read_data("./data/mnist/mnist_780", save=False)
+        A = build_A_sequential(data, sigma, save=True)
+
+    if size == 1:
+        Omega = srht.fast_SRHT(l, n).T
+        U, Sigma = rns.rand_nystrom_cholesky(A, Omega, truncate_rank)
+        print("Sequential")
+    else:
+        U, Sigma = rns.rand_nystrom_cholesky_parallel(
+            A, n, l, truncate_rank, comm)
+        print("Parallel")
+
+    if rank == 0:
+        A_Nystrom = U @ Sigma @ U.T
+        print("Nyström via Cholesky:")
+        print(np.linalg.norm(A-A_Nystrom, ord='nuc') /
+              np.linalg.norm(A, ord='nuc'))

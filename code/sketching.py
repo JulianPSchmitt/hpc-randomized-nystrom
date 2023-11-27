@@ -33,11 +33,9 @@ def sketch_2D_BSRHT(A, n: int, l: int, comm: MPI.Comm, seed=700):
     comm_rows = comm.Split(color=rank % 2, key=rank / 2)
     rank_cols = comm_cols.Get_rank()
 
+    # GENERATE OMEGA (sketching matrices)
     Omega_right = srht.block_SRHT(l=l, m=n, comm=comm_cols, seed=seed).T
     Omega_left = srht.block_SRHT(l=l, m=n, comm=comm_rows, seed=seed)
-
-    print(Omega_left.shape)
-    print(Omega_right.shape)
 
     # DISTRIBUTE A
     # We start by scattering the columns of A
