@@ -5,6 +5,7 @@ from os.path import join
 # Following imports should be from different file
 # Simply here to get plotting started
 from plotting import randomized_nystrom
+from randomized_nystrom import rand_nystrom_cholesky
 
 R = [5, 10, 20]
 epss = [1e-4, 1e-2, 1e-1]
@@ -56,10 +57,13 @@ def properties_example_matricies(
                 A_nyst, cond_B = randomized_nystrom(
                     A=A, l=l, Omega1=Omega, return_cond_B=True, print_cond=True
                 )
+                U, S = rand_nystrom_cholesky(A=A, Omega=Omega, rank=l)
+                assert np.isclose(A_nyst, U @ S @ U.T)
+
                 rel_err = np.linalg.norm(A_nyst - A) / np.linalg.norm(A)
                 errors.append(rel_err)
                 cond_As.append(np.linalg.cond(A))
-                cond_Bs.append(cond_B)
+                cond_Bs.append(np.linalg.cond(Omega.T @ A @ Omega))  # cond_B
             ### Error plots ###
             axs_err[k].loglog(
                 matrix_variables[k],
