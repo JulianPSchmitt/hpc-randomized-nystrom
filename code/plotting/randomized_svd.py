@@ -1,11 +1,63 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import scipy
 from os.path import join
+from scipy.linalg import hadamard
 
-# Following imports should be from different file
-# Simply here to get plotting started
-from plotting import generate_matrix, randomized_svd
+
+# From Rokhlin, Szlam, Tygert paper:
+# "A Randomized Algorithm For Principal Component Analysis"
+# Currently only used for this plot, but should be moved if used elsewhere
+def generate_matrix(m, sig_kp1=0.1, k=10):
+    U = hadamard(m, dtype="d") / np.sqrt(m)
+    V = hadamard(2 * m, dtype="d") / np.sqrt(2 * m)
+    firstSig = [sig_kp1 ** (np.floor(j / 2) / 5) for j in range(1, k + 1)]
+    sigmas = firstSig + [
+        sig_kp1 * (m - j) / (m - 11) for j in range(k + 1, m + 1)
+    ]
+    S = np.concatenate([np.diag(sigmas), np.zeros((m, m), dtype="d")], axis=1)
+
+    return U @ S @ V.T, sigmas
+
+
+# Needed for plot here, but if used for anything else
+# than plot, should be moved to proper file.
+def randomized_svd(
+    A: np.ndarray,
+    k: int = 10,  # Desired rank
+    p: int = 6,  # p=6 gives prob 0.99
+    returnQ1: bool = False,
+    seed: int = 42,
+):
+    np.random.seed(seed)
+
+    m, n = A.shape
+    l = p + k
+
+    Omega1 = np.random.random((n, l))
+
+    Y = (A @ A.T) @ A @ Omega1
+    Q1 = np.linalg.qr(Y)[0]
+
+    B = Q1.T @ A
+
+    if min(B.shape) == k:
+        U_t, Sigma, V_t = scipy.linalg.svd(B)
+    else:
+        U_t, Sigma, V_t = scipy.sparse.linalg.svds(B, k=k)
+
+    # Truncate
+    U_t = U_t[:, :k]
+    Sigma = Sigma[:k]
+    V_t = V_t[:, :k]
+    # Also apply Q1 to U_t
+    U = Q1 @ U_t
+
+    if returnQ1:
+        return U, Sigma, V_t, Q1
+    else:
+        return U, Sigma, V_t
 
 
 def singvalplots(
