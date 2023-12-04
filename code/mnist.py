@@ -6,19 +6,15 @@ from mpi4py import MPI
 rng = np.random.default_rng(seed=2002)
 
 
-def build_A_sequential(data, c=10**4, save=False):
+def build_A(data, c=10**4, save=False):
     '''
     Function to build A out of a data base using the RBF exp( -|| x i - x j || /
-    c) Notice that we only need to fill in the upper triangle part of A since
-    it's symmetric and its diagonal elements are all 1.
+    c). The function solely based on NumPy broadcasting and is therefore
+    superior to methods involving Python loops.
     '''
-    n = data.shape[0]
-    A = np.zeros((n, n))
-    for j in range(n):
-        for i in range(j):
-            A[i, j] = np.exp(-(np.linalg.norm(data[i, :] - data[j, :])**2)/c)
-    A = A + np.transpose(A)
-    np.fill_diagonal(A, 1.0)
+    data_norm = np.sum(data ** 2, axis=-1)
+    A = np.exp(-(1/c) * (data_norm[:, None] +
+               data_norm[None, :] - 2 * np.dot(data, data.T)))
     if save:
         A.tofile('./A.csv', sep=',', format='%10.f')
     return A
@@ -66,7 +62,7 @@ if __name__ == "__main__":
     A = None
     if rank % 2 == 0:
         data, labels = read_data("./data/mnist/mnist_780", save=False)
-        A = build_A_sequential(data, sigma, save=True)
+        A = build_A(data, sigma, save=False)
 
     if size == 1:
         Omega = srht.fast_SRHT(l, n).T
