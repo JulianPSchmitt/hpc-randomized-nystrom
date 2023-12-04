@@ -28,7 +28,7 @@ def SASO(l: int, m: int, comm: MPI.Comm, seed=2002):
     np.random.seed(seed + rank + 100)
 
     # Nonzero values in short-axis vectors are iid ~ Rademacher
-    # i.e. samples uniformly from the disjoint intervals (-2, 1], [1, 2)
+    # i.e. samples uniformly from the disjoint intervals (-2, -1], [1, 2)
     # (this protects against the possibility of the vector being orthogonal to
     # a column of the matrix to be sketched)
     Omega = np.zeros((l, r), dtype=float)
