@@ -48,15 +48,27 @@ def properties_example_matricies(
                 )
 
                 ### values related to rand_nystrom ###
-                n, _ = A.shape
-                Omega = np.random.random((n, l))
-                U, S = rand_nystrom_cholesky(A=A, Omega=Omega, rank=l)
-                A_nyst = U @ S @ U.T
+                try:
+                    n, _ = A.shape
+                    Omega = np.random.random((n, l))
+                    U, S = rand_nystrom_cholesky(A=A, Omega=Omega, rank=l)
+                    A_nyst = U @ S @ U.T
 
-                rel_err = np.linalg.norm(A_nyst - A) / np.linalg.norm(A)
-                errors.append(rel_err)
-                cond_As.append(np.linalg.cond(A))
-                cond_Bs.append(np.linalg.cond(Omega.T @ A @ Omega))  # cond_B
+                    rel_err = np.linalg.norm(A_nyst - A) / np.linalg.norm(A)
+                    errors.append(rel_err)
+                    cond_As.append(np.linalg.cond(A))
+                    cond_Bs.append(
+                        np.linalg.cond(Omega.T @ A @ Omega)
+                    )  # cond_B
+                except Exception as err:
+                    print(
+                        f"For matrix {types[k]} with R={R[i]}, error"
+                        f" encountered: {err}!"
+                    )
+                    errors.append(np.inf)
+                    cond_As.append(np.linalg.cond(A))
+                    cond_Bs.append(np.linalg.cond(Omega.T @ A @ Omega))
+
             ### Error plots ###
             axs_err[k].loglog(
                 matrix_variables[k],
