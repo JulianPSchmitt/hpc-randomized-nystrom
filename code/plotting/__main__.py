@@ -1,7 +1,7 @@
 import csv
 import numpy as np
 from plotting.srhtplots import srht_plot
-from plotting.singvals import singvalplots
+from plotting.randomized_svd import singvalplots
 from plotting.example_matricies import properties_example_matricies
 from plotting.papermatchingplots import paperMatchingPlots
 from os.path import join
@@ -77,6 +77,7 @@ if __name__ == "__main__":
     )
 
     # Week 9 (datasets and paper)
+    # Both MNIST and YearMSD cannot work with randomized nystrom chol.
     pathX1 = join(
         "/home/chrillebon/hpc_epfl/Project2andFriends/week9", "MNISTtrain.npy"
     )
