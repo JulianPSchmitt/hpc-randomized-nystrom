@@ -1,9 +1,10 @@
 from mpi4py import MPI
 import numpy as np
 import srht
+import saso
 
 
-def sketch_2D_BSRHT(A, n: int, l: int, comm: MPI.Comm, seed=700):
+def sketch_2D(A, n: int, l: int, comm: MPI.Comm, seed=700, mode = 'BSRHT'):
     """
     Sketch a n×n matrix A from right and left using BSRHT.
 
@@ -34,8 +35,14 @@ def sketch_2D_BSRHT(A, n: int, l: int, comm: MPI.Comm, seed=700):
     rank_cols = comm_cols.Get_rank()
 
     # GENERATE OMEGA (sketching matrices)
-    Omega_right = srht.block_SRHT(l=l, m=n, comm=comm_cols, seed=seed).T
-    Omega_left = srht.block_SRHT(l=l, m=n, comm=comm_rows, seed=seed)
+    if mode == 'BSRHT':
+        Omega_right = srht.block_SRHT(l=l, m=n, comm=comm_cols, seed=seed).T
+        Omega_left = srht.block_SRHT(l=l, m=n, comm=comm_rows, seed=seed)
+    elif mode == 'SASO':
+        Omega_right = saso.SASO(l=l, m=n, comm=comm_cols, seed=seed).T
+        Omega_left = saso.SASO(l=l, m=n, comm=comm_rows, seed=seed)
+    else:
+        raise NameError("Invalid Mode: " + mode)
 
     # DISTRIBUTE A
     # We start by scattering the columns of A
