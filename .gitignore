@@ -2,3 +2,4 @@
 dist/
 *.pyc
 alt_srht.py
+data/*
