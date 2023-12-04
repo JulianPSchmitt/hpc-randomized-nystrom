@@ -5,6 +5,7 @@ from plotting.randomized_svd import singvalplots
 from plotting.example_matricies import properties_example_matricies
 from plotting.papermatchingplots import paperMatchingPlots
 from os.path import join
+from __init__ import _FOLDER
 
 
 def getWb(path: str, simple: bool = False):
@@ -24,18 +25,15 @@ def getWb(path: str, simple: bool = False):
     return np.array(W), np.array(b)
 
 
-def load_data(simple: bool = False):
-    path = "/home/chrillebon/hpc_epfl/Project2andFriends/week7/"
-    if simple:
-        path += "Experience-Salary.csv"
-    else:
-        path += "Walmart.csv"
+def load_simple_data(simple: bool = False):
+    path = join(_FOLDER, "data")
 
-    try:
-        W, b = getWb(path=path, simple=simple)
-    except:
-        path = "Project2andFriends/" + path
-        W, b = getWb(path=path, simple=simple)
+    if simple:
+        path = join(path, "Experience-Salary.csv")
+    else:
+        path = join(path, "Walmart.csv")
+
+    W, b = getWb(path=path, simple=simple)
 
     W = np.array(W)
     b = np.array(b)
@@ -55,12 +53,12 @@ def load_data(simple: bool = False):
 
 
 if __name__ == "__main__":
-    plotpath = "/home/chrillebon/hpc_epfl/Project2andFriends/hpc-randomized-nystrom/plots"
+    plotpath = join(_FOLDER, "plots")
     specifier = "_tmp"
 
     # week 7, ex1
     # Properties (and time to run) for SRHT (single processor)
-    W, b = load_data(simple=False)
+    W, b = load_simple_data(simple=False)
     b = b[:, None]
     srht_plot(W, b, savepath=plotpath, plotTitleSpecifier=specifier)
     # Randomized SVD and its properties (singular values etc.)
@@ -71,7 +69,8 @@ if __name__ == "__main__":
     # Example matricies (noise, pol and exp) and their
     # properties (singular values etc.)
     test_matricies_path = join(
-        "/home/chrillebon/hpc_epfl/Project2andFriends/week8",
+        _FOLDER,
+        "data",
         "test_matricies.npy",
     )
     properties_example_matricies(
@@ -84,12 +83,8 @@ if __name__ == "__main__":
     # Plots matching what we see in the paper in terms of (relative)
     # precision of two datasets MNIST and YearMSD.
     # Note: Both MNIST and YearMSD cannot work with randomized nystrom chol.
-    pathX1 = join(
-        "/home/chrillebon/hpc_epfl/Project2andFriends/week9", "MNISTtrain.npy"
-    )
-    pathX2 = join(
-        "/home/chrillebon/hpc_epfl/Project2andFriends/week9", "YearMSD.npy"
-    )
+    pathX1 = join(_FOLDER, "data", "MNISTtrain.npy")
+    pathX2 = join(_FOLDER, "data", "YearMSD.npy")
     paperMatchingPlots(
         savepath=plotpath,
         MNIST_X_path=pathX1,
