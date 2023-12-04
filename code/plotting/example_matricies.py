@@ -1,10 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from os.path import join
-
-# Following imports should be from different file
-# Simply here to get plotting started
-from plotting import randomized_nystrom
 from randomized_nystrom import rand_nystrom_cholesky
 
 R = [5, 10, 20]
@@ -54,11 +50,8 @@ def properties_example_matricies(
                 ### values related to rand_nystrom ###
                 n, _ = A.shape
                 Omega = np.random.random((n, l))
-                A_nyst, cond_B = randomized_nystrom(
-                    A=A, l=l, Omega1=Omega, return_cond_B=True, print_cond=True
-                )
                 U, S = rand_nystrom_cholesky(A=A, Omega=Omega, rank=l)
-                assert np.isclose(A_nyst, U @ S @ U.T)
+                A_nyst = U @ S @ U.T
 
                 rel_err = np.linalg.norm(A_nyst - A) / np.linalg.norm(A)
                 errors.append(rel_err)

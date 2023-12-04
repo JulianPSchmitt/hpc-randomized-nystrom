@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
-from plotting import computeA, randomized_nystrom
+from randomized_nystrom import rand_nystrom_cholesky
+from plotting import computeA
 from os.path import join
 
 
@@ -17,17 +18,11 @@ def errorplot(X: np.ndarray, n: int, c: float, ls: list[int], ks: list[int]):
     for o, l in tqdm(enumerate(ls), total=len(ls)):
         for i, k in enumerate(ks):
             Omega = np.random.random((n, l))
-            U, s, Vt = randomized_nystrom(
-                A=A,
-                l=l,
-                Omega1=Omega,
-                k=k,
-                print_cond=False,
-                return_computed_A=False,
-            )
-            Anyst = U @ s @ Vt
 
-            errs[o][i] = np.linalg.norm(A - Anyst, "nuc") / np.linalg.norm(
+            U, S = rand_nystrom_cholesky(A=A, Omega=Omega, rank=l)
+            A_nyst = U @ S @ U.T
+
+            errs[o][i] = np.linalg.norm(A - A_nyst, "nuc") / np.linalg.norm(
                 A, "nuc"
             )
 
