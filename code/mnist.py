@@ -67,11 +67,9 @@ if __name__ == "__main__":
     if size == 1:
         Omega = srht.fast_SRHT(l, n).T
         U, Sigma = rns.rand_nystrom_cholesky(A, Omega, truncate_rank)
-        print("Sequential")
     else:
         U, Sigma = rns.rand_nystrom_cholesky_parallel(
             A, n, l, truncate_rank, comm)
-        print("Parallel")
 
     if rank == 0:
         A_Nystrom = U @ Sigma @ U.T

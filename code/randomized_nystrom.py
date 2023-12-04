@@ -25,13 +25,14 @@ def rand_nystrom_cholesky(A, Omega, rank):
 
 
 def rand_nystrom_cholesky_parallel(
-    A, n: int, l: int, truncate_rank: int, comm: MPI.Comm, seed=2002
+    A, n: int, l: int, truncate_rank: int, comm: MPI.Comm,
+    seed=2002, sketching_mode='BSRHT'
 ):
     """Compute the randomized Nyström rank k approximation given the sketching
     matrix Omega (uses Cholesky decomposition)"""
     rank = comm.Get_rank()
 
-    B, C = sketching.sketch_2D_BSRHT(A, n, l, comm, seed)
+    B, C = sketching.sketch_2D(A, n, l, comm, seed, sketching_mode)
 
     Z = None
     if rank == 0:
