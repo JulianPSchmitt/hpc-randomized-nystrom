@@ -3,7 +3,7 @@
 
 from setuptools import setup, find_packages
 
-_requirements = ["numpy", "mpi4py", "matplotlib", "scipy", "tqdm"]
+_requirements = ["numpy", "mpi4py", "matplotlib", "scipy", "tqdm", "pandas"]
 
 setup(
     name="randnystrom",
