@@ -59,13 +59,17 @@ if __name__ == "__main__":
     specifier = "_tmp"
 
     # week 7, ex1
+    # Properties (and time to run) for SRHT (single processor)
     W, b = load_data(simple=False)
     b = b[:, None]
     srht_plot(W, b, savepath=plotpath, plotTitleSpecifier=specifier)
+    # Randomized SVD and its properties (singular values etc.)
     # week 7, ex2
     singvalplots(savepath=plotpath, plotTitleSpecifier=specifier)
 
     # week 8, ex2
+    # Example matricies (noise, pol and exp) and their
+    # properties (singular values etc.)
     test_matricies_path = join(
         "/home/chrillebon/hpc_epfl/Project2andFriends/week8",
         "test_matricies.npy",
@@ -76,8 +80,10 @@ if __name__ == "__main__":
         plotTitleSpecifier=specifier,
     )
 
-    # Week 9 (datasets and paper)
-    # Both MNIST and YearMSD cannot work with randomized nystrom chol.
+    # Week 9
+    # Plots matching what we see in the paper in terms of (relative)
+    # precision of two datasets MNIST and YearMSD.
+    # Note: Both MNIST and YearMSD cannot work with randomized nystrom chol.
     pathX1 = join(
         "/home/chrillebon/hpc_epfl/Project2andFriends/week9", "MNISTtrain.npy"
     )
