@@ -2,21 +2,21 @@ from mpi4py import MPI
 import numpy as np
 
 
-def tsqr(A, n: int, l: int, comm: MPI.Comm, compute_Q=False):
+def tsqr(A, n: int, comm: MPI.Comm, compute_Q=False):
+    """Compute the QR decomposition of the matrix A using the TSQR algorithm.
+    The method assumes the input matrix A to be row-block distributed on the
+    processors of the given communicator. The Q factor will be returned
+    distributed row-block wise and the R factor is exclusively computed on the
+    root processor."""
     rank = comm.Get_rank()
     size = comm.Get_size()
-
-    # Distribute the row-blocks across the processors
-    block_rows = n // size
-    submatrix = np.zeros((block_rows, l), dtype='float')
-    comm.Scatterv(A, submatrix, root=0)
 
     # Compute R
     tree_size = int(np.log2(size))
     Qs = np.empty(tree_size+1, dtype=np.matrix)
     P_new = rank
 
-    Qs[0], R = np.linalg.qr(submatrix)
+    Qs[0], R = np.linalg.qr(A)
     for i in range(tree_size):
         if P_new % 2 == 0:
             m, n = R.shape
@@ -53,5 +53,30 @@ def tsqr(A, n: int, l: int, comm: MPI.Comm, compute_Q=False):
             Qs[i-1] @= Qs[i]
             send = True
 
-    comm.Gatherv(Qs[0], A)
-    return A, R
+    return Qs[0], R
+
+
+def tsqr_no_Q(A, n: int, comm: MPI.Comm):
+    """Compute the QR decomposition of the matrix A using the TSQR algorithm.
+    To exploit additional optimizations, the Q factor is omitted. Note: the R
+    factor is only returned on the root processor."""
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+
+    # Compute R
+    tree_size = int(np.log2(size))
+    P_new = rank
+
+    R = np.linalg.qr(A, mode='r')
+    for i in range(tree_size):
+        if P_new % 2 == 0:
+            m, n = R.shape
+            R_temp = np.zeros((m, n), dtype='float')
+            comm.Recv(R_temp, source=rank + i + 1, tag=44)
+            R = np.linalg.qr(np.vstack((R, R_temp)), mode='r')
+        else:
+            comm.Send(R, dest=rank - i - 1, tag=44)
+            break
+        P_new = (P_new + 1) // 2
+
+    return R
