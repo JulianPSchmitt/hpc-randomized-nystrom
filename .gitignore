@@ -1,0 +1,5 @@
+*.egg-info
+dist/
+*.pyc
+alt_srht.py
+data/*
