@@ -14,14 +14,15 @@ def deep_transpose(X, size):
 
 def sketch_2D(A, n: int, l: int, comm: MPI.Comm, seed=700,  mode='BSRHT'):
     """
-    Sketch a n×n matrix A from right and left using BSRHT.
+    Sketch a n×n matrix A from right and left using BSRHT or SASO.
 
-    The matrix A is distributed on a Pr×Pc processor grid and the SRHT sketching
-    matrix Ω is distributed block row-wise.
+    The matrix A is distributed on a p×p processor grid and the sketching matrix
+    Ω is distributed block row-wise.
 
     Each local block is sketched, then all results are sum-reduced:
-    1) Perform C_ij = A_ij Ω_j and sum all C_ij for a given i
-    2) Perform B_i = Ω_i C_i and sum all B_i
+    1) Perform C_ij = A_ij Ω_j and sum reduce all C_ij row-wise
+    2) Compute B_i = Ω_i C_i using the block-row distribution of C and sum
+       reduce
 
     Return B and C (B is available on the root processors and C is returned
     distributed row-block wise.)
