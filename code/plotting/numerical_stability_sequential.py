@@ -1,10 +1,7 @@
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
-from randomized_nystrom import (
-    rand_nystrom_cholesky,
-    rand_nystrom_ldl,
-)
+from randomized_nystrom import rand_nystrom_cholesky
 from os.path import join
 from mnist import build_A
 from tqdm import tqdm
@@ -12,18 +9,16 @@ from srht import fast_SRHT
 from __init__ import _FOLDER
 
 
-def relative_error_rank(A, Omega, ks, ax=None, **plt_kwargs):
+def relative_error_rank(A, Omega, ks, ax=None, normAnuc=None, **plt_kwargs):
+    if normAnuc is None:
+        normAnuc = norm(A, "nuc")
+
     errs = [None for _ in range(len(ks))]
     for i, k in tqdm(enumerate(ks), total=len(ks)):
-        try:
-            U, S = rand_nystrom_cholesky(A, Omega, rank=k)
-        except:
-            # This requires ldl nystrom, but not yet in code...
-            U, S = rand_nystrom_ldl(A, Omega, k)
-            print(f"WARNING!!! Cholesky failed! Trying LDL")
+        U, S = rand_nystrom_cholesky(A, Omega, rank=k)
         A_nyst = U @ S @ U.T
 
-        errs[i] = norm(A - A_nyst, "nuc") / norm(A, "nuc")
+        errs[i] = norm(A - A_nyst, "nuc") / normAnuc
 
     if ax is None:
         fig, ax = plt.subplots(1, 1)
@@ -50,6 +45,8 @@ def compare_relative_error_sketching(
         fig, ax = plt.subplots(1, 1)
     m, n = A.shape
 
+    normAnuc = norm(A, "nuc")
+
     colors = plotting_kwargs.get("color", None)
     if colors is None and len(ls) <= 5:
         colors = "krbgy"
@@ -70,7 +67,12 @@ def compare_relative_error_sketching(
 
         ks_this = [k for k in ks if k <= l]
         ax = relative_error_rank(
-            A=A, Omega=Omega, ks=ks_this, ax=ax, **plotting_kwargs
+            A=A,
+            Omega=Omega,
+            ks=ks_this,
+            ax=ax,
+            normAnuc=normAnuc,
+            **plotting_kwargs,
         )
 
     ax.set_title(title)
@@ -89,11 +91,11 @@ if __name__ == "__main__":
         A = build_A(X, c=c, save=False)
         return A
 
-    n = 2**11
+    n = 2**12
     all_As = []
     dataset_names = []
     methods = [lambda x: fast_SRHT(x[1], x[0]).T]
-    method_names = ["SRHT-seq", "SASO"]
+    method_names = ["SRHT-seq"]
 
     # Mnist dataset
     MNIST_X_path = join(_FOLDER, "data", "MNISTtrain.npy")
@@ -124,9 +126,9 @@ if __name__ == "__main__":
     print(f"Going to pol with shape: {A_pol.shape}")
     all_As.append(A_pol)
     dataset_names.append("Pol-R10-p1")
-    A_exp = test_matricies[2, 1, 1]
-    all_As.append(A_exp)
-    dataset_names.append("Exp-R10-q0.25")
+    # A_exp = test_matricies[2, 1, 1]
+    # all_As.append(A_exp)
+    # dataset_names.append("Exp-R10-q0.25")
 
     # From here we generate plots for all A and all methods
     for i, A in enumerate(all_As):
@@ -134,8 +136,8 @@ if __name__ == "__main__":
             ax = compare_relative_error_sketching(
                 A,
                 method=method,
-                ls=[600, 1000],
-                ks=[200, 400, 600],
+                ls=[64, 128, 256],
+                ks=[15, 30, 60, 120, 240],
                 title=(
                     f"Nystrom error {dataset_names[i]}, Omega from"
                     f" {method_names[o]}"
@@ -143,7 +145,7 @@ if __name__ == "__main__":
                 savepath=join(
                     _FOLDER,
                     "plots",
-                    f"{dataset_names[i]}_relerror{method_names[o]}.png",
+                    f"relerror_{dataset_names[i]}_{method_names[o]}.png",
                 ),
             )
             plt.show(block=False)

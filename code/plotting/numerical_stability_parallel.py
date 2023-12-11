@@ -1,3 +1,7 @@
+# turn off threads in numpy (with openblas)
+from os import environ
+
+environ["OMP_NUM_THREADS"] = "1"
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
@@ -9,11 +13,6 @@ from os.path import join
 from mnist import build_A
 from tqdm import tqdm
 from __init__ import _FOLDER
-
-# turn off threads in numpy (with openblas)
-from os import environ
-
-environ["OMP_NUM_THREADS"] = "1"
 
 
 def relative_error_rank_parallel(
@@ -141,7 +140,9 @@ if __name__ == "__main__":
         A = build_A(X, c=c, save=False)
         return A
 
-    n = 2**10  # Should be 10**12 or higher when running final time!
+    n = 2**12  # Should be 10**12 or higher when running final time!
+    ls = [64, 128, 256]
+    ks = [15, 30, 60, 120, 240]
     all_As = []
     dataset_names = []
     methods = ["BSRHT", "SASO"]
@@ -188,8 +189,8 @@ if __name__ == "__main__":
                 n=n,
                 comm=comm,
                 sketching_mode=method,
-                ls=[64, 128, 256],  # [600, 1000]
-                ks=[16, 32, 64, 128, 256],  # [200, 400, 600]
+                ls=ls,  # [600, 1000]
+                ks=ks,  # [16, 32, 64, 128, 256],  # [200, 400, 600]
                 title=(
                     f"Nystrom error {dataset_names[i]}, Omega from"
                     f" {method_names[o]}"
@@ -197,7 +198,7 @@ if __name__ == "__main__":
                 savepath=join(
                     _FOLDER,
                     "plots",
-                    f"{dataset_names[i]}_relerror{method_names[o]}_small.png",
+                    f"relerror_{dataset_names[i]}_{method_names[o]}.png",
                 ),
             )
             plt.show(block=False)
