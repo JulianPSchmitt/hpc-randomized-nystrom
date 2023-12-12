@@ -91,7 +91,9 @@ if __name__ == "__main__":
         A = build_A(X, c=c, save=False)
         return A
 
-    n = 2**12
+    n = 2**13
+    ls = [400, 600, 1000, 2000]  # [64, 128, 256]
+    ks = [100, 200, 350, 500, 700, 900]  # [15, 30, 60, 120, 240]
     all_As = []
     dataset_names = []
     methods = [lambda x: fast_SRHT(x[1], x[0]).T]
@@ -119,14 +121,14 @@ if __name__ == "__main__":
     test_matrix_path = join(
         _FOLDER,
         "data",
-        "test_matricies_1024.npy",
+        "test_matricies_8192.npy",
     )
     test_matricies = np.load(test_matrix_path)
-    A_pol = test_matricies[1, 1, 1]
+    A_pol = test_matricies[0]
     print(f"Going to pol with shape: {A_pol.shape}")
     all_As.append(A_pol)
     dataset_names.append("Pol-R10-p1")
-    # A_exp = test_matricies[2, 1, 1]
+    # A_exp = test_matricies[1]
     # all_As.append(A_exp)
     # dataset_names.append("Exp-R10-q0.25")
 
@@ -136,8 +138,8 @@ if __name__ == "__main__":
             ax = compare_relative_error_sketching(
                 A,
                 method=method,
-                ls=[64, 128, 256],
-                ks=[15, 30, 60, 120, 240],
+                ls=ls,
+                ks=ks,
                 title=(
                     f"Nystrom error {dataset_names[i]}, Omega from"
                     f" {method_names[o]}"

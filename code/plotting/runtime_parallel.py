@@ -87,14 +87,14 @@ if __name__ == "__main__":
         A = build_A(X, c=c, save=False)
         return A
 
-    n = 2**12
-    nRuns = 10
+    n = 2**13
+    nRuns = 3
     all_As = []
     dataset_names = []
     methods = ["BSRHT", "SASO"]
     method_names = ["SRHT-block", "SASO"]
-    ls = [64, 128, 256]
-    ks = [15, 30, 60, 120, 240]
+    ls = [400, 600, 1000, 2000]  # [64, 128, 256]
+    ks = [100, 200, 350, 500, 700, 900]  # [15, 30, 60, 120, 240]
 
     # Mnist dataset
     MNIST_X_path = join(_FOLDER, "data", "MNISTtrain.npy")
@@ -118,15 +118,15 @@ if __name__ == "__main__":
     test_matrix_path = join(
         _FOLDER,
         "data",
-        "test_matricies_1024.npy",
+        "test_matricies_8192.npy",
     )
     test_matricies = np.load(test_matrix_path)
-    A_pol = test_matricies[1, 1, 1]
+    A_pol = test_matricies[0]
     if rank == 0:
         print(f"Going to pol with shape: {A_pol.shape}")
     all_As.append(A_pol)
     dataset_names.append("Pol-R10-p1")
-    # A_exp = test_matricies[2, 1, 1]
+    # A_exp = test_matricies[1]
     # all_As.append(A_exp)
     # dataset_names.append("Exp-R10-q0.25")
 
