@@ -1,0 +1,88 @@
+\usepackage{vmargin}
+\setmarginsrb{28mm}{25mm}{28mm}{25mm}{0pt}{0mm}{0pt}{0mm}
+\setlength{\footskip}{20pt}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.9} % for backward compatibility
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usepackage{bbm}
+\usepackage{subcaption}
+% \usepackage[boxruled]{algorithm2e}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usetikzlibrary{positioning}
+\usepackage{caption}
+\usepackage{mathtools}
+\usepackage{lipsum}
+\usepackage[title,titletoc]{appendix}
+\usepackage{booktabs}
+\usepackage{here}
+%Literatur
+\usepackage[%
+    backend=biber,
+    sortcites, % sort automatically
+    sorting=nty, % sort order
+    safeinputenc, % solves problems with unicode-formatted author names etc.
+    citestyle=alphabetic, %
+    bibstyle=alphabetic, %
+    hyperref=true, % provide clickable links
+    maxbibnames=3, % shorten author list for more than 3 names
+    maxcitenames=3, % use at most 3 names for key
+    url=false, % do not print URLs
+    doi=false, % do not print DOIs
+    giveninits=true,
+    ]%
+{biblatex}
+% automatische Anführungszeichen
+\usepackage[autostyle=true]{csquotes}
+\usepackage[hidelinks]{hyperref}
+%some weird packages
+\usepackage{halloweenmath}
+\usepackage{txfonts}
+\usepackage{knitting}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{multirow}
+
+\definecolor{codegreen}{rgb}{0,0.4,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    %backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{mymauve},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\renewcommand{\phi}{\varphi}
+\newcommand{\eqtext}[1]{\ensuremath{\stackrel{#1}{=}}}
+\newcommand{\leqtext}[1]{\ensuremath{\stackrel{#1}{\leq}}}
+\newtheorem{theorem}{Proposition}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{remark}{Remark}[section]
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\epl}{\varepsilon}
