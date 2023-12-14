@@ -4,7 +4,10 @@ from os import environ
 environ["OMP_NUM_THREADS"] = "1"
 import numpy as np
 import matplotlib.pyplot as plt
-from randomized_nystrom import rand_nystrom_cholesky_parallel
+from randomized_nystrom import (
+    rand_nystrom_cholesky_parallel,
+    rand_nystrom_svd_parallel
+)
 from mpi4py import MPI
 from os.path import join
 from mnist import build_A
@@ -17,6 +20,7 @@ def find_runtimes_parallel(
     A,
     comm,
     sketching_mode,
+    cholesky=True,
     ls: list[int] = [600, 1000, 2000],
     ks: list[int] = [200, 300, 400, 500, 600],
     seed=2002,
@@ -38,20 +42,34 @@ def find_runtimes_parallel(
         ks_this = [k for k in ks if k <= l]
         for o, k in enumerate(ks_this):
             for j in range(nRuns):
-                t1 = time()
-                U, S = rand_nystrom_cholesky_parallel(
-                    A=A,
-                    n=n,
-                    l=l,
-                    truncate_rank=k,
-                    comm=comm,
-                    seed=seed,
-                    sketching_mode=sketching_mode,
-                )
-
-                t2 = time()
-                if rank == 0:
-                    alltimes[i, o, j] = t2 - t1
+                if cholesky:
+                    t1 = time()
+                    U, S = rand_nystrom_cholesky_parallel(
+                        A=A,
+                        n=n,
+                        l=l,
+                        truncate_rank=k,
+                        comm=comm,
+                        seed=seed,
+                        sketching_mode=sketching_mode,
+                    )
+                    t2 = time()
+                    if rank == 0:
+                        alltimes[i, o, j] = t2 - t1
+                else:
+                    t1 = time()
+                    U, S = rand_nystrom_svd_parallel(
+                        A=A,
+                        n=n,
+                        l=l,
+                        truncate_rank=k,
+                        comm=comm,
+                        seed=seed,
+                        sketching_mode=sketching_mode,
+                    )
+                    t2 = time()
+                    if rank == 0:
+                        alltimes[i, o, j] = t2 - t1
             if rank == 0:
                 allmeans[i, o] = np.mean(alltimes[i, o, :])
                 allstd[i, o] = np.std(alltimes[i, o, :])
@@ -89,8 +107,10 @@ if __name__ == "__main__":
 
     n = 2**13
     nRuns = 3
-    all_As = []
-    dataset_names = []
+    As_cholesky = []
+    As_svd = []
+    dataset_names_cholesky = []
+    dataset_names_svd = []
     methods = ["BSRHT", "SASO"]
     method_names = ["SRHT-block", "SASO"]
     ls = [400, 600, 1000, 2000]  # [64, 128, 256]
@@ -100,19 +120,19 @@ if __name__ == "__main__":
     MNIST_X_path = join(_FOLDER, "data", "MNISTtrain.npy")
     X = np.load(MNIST_X_path)
     A = rbf_kernel(X=X, n=n, c=1e4)
-    all_As.append(A)
-    dataset_names.append("RBF-MNIST")
+    As_cholesky.append(A)
+    dataset_names_cholesky.append("RBF-MNIST")
 
     # YearMSD dataset
     YEAR_X_path = join(_FOLDER, "data", "YearMSD.npy")
     X = np.load(YEAR_X_path)
     A = rbf_kernel(X=X, n=n, c=(1e4) ** 2)
-    all_As.append(A)
-    dataset_names.append("RBF-YearMSD-1e4")
+    As_cholesky.append(A)
+    dataset_names_cholesky.append("RBF-YearMSD-1e4")
 
     A = rbf_kernel(X=X, n=n, c=(1e5) ** 2)
-    all_As.append(A)
-    dataset_names.append("RBF-YearMSD-1e5")
+    As_cholesky.append(A)
+    dataset_names_cholesky.append("RBF-YearMSD-1e5")
 
     # Synthetic datasets
     test_matrix_path = join(
@@ -124,19 +144,20 @@ if __name__ == "__main__":
     A_pol = test_matricies[0]
     if rank == 0:
         print(f"Going to pol with shape: {A_pol.shape}")
-    all_As.append(A_pol)
-    dataset_names.append("Pol-R10-p1")
-    # A_exp = test_matricies[1]
-    # all_As.append(A_exp)
-    # dataset_names.append("Exp-R10-q0.25")
+    As_cholesky.append(A_pol)
+    dataset_names_cholesky.append("Pol-R10-p1")
+    A_exp = test_matricies[1]
+    As_svd.append(A_exp)
+    dataset_names_svd.append("Exp-R10-q0.25")
 
-    # From here we generate plots for all A and all methods
-    for i, A in enumerate(all_As):
+    # From here we generate plots for all A via Cholesky and all methods
+    for i, A in enumerate(As_cholesky):
         for o, method in enumerate(methods):
             all_times, all_std = find_runtimes_parallel(
                 A=A,
                 comm=comm,
                 sketching_mode=method,
+                cholesky=True,
                 ls=ls,
                 ks=ks,
                 nRuns=nRuns,
@@ -157,7 +178,7 @@ if __name__ == "__main__":
                         c="krbgy"[j],
                     )
                 plt.title(
-                    f"Parallel runtime for {dataset_names[i]}, Omega from"
+                    f"Parallel runtime for {dataset_names_cholesky[i]}, Omega from"
                     f" {method_names[o]}"
                 )
                 plt.xlabel("Approximation rank")
@@ -166,6 +187,47 @@ if __name__ == "__main__":
                 savepath = join(
                     _FOLDER,
                     "plots",
-                    f"runtime_par_{dataset_names[i]}_{method_names[o]}.png",
+                    f"runtime_par_{dataset_names_cholesky[i]}_{method_names[o]}.png",
+                )
+                plt.savefig(savepath)
+
+    # From here we generate plots for all A via SVD and all methods
+    for i, A in enumerate(As_svd):
+        for o, method in enumerate(methods):
+            all_times, all_std = find_runtimes_parallel(
+                A=A,
+                comm=comm,
+                sketching_mode=method,
+                cholesky=False,
+                ls=ls,
+                ks=ks,
+                nRuns=nRuns,
+                average_over=None,
+            )
+
+            if rank == 0:
+                fig, ax = plt.subplots(1, 1)
+                for j, times in enumerate(all_times):
+                    stds = all_std[j]
+                    ks_this = [k + j - 1 for k in ks if k <= ls[j]]
+                    ax.errorbar(
+                        ks_this,
+                        times[: len(ks_this)],
+                        yerr=stds[: len(ks_this)],
+                        fmt="-",
+                        label=f"l={ls[j]}",
+                        c="krbgy"[j],
+                    )
+                plt.title(
+                    f"Parallel runtime for {dataset_names_svd[i]}, Omega from"
+                    f" {method_names[o]}"
+                )
+                plt.xlabel("Approximation rank")
+                plt.ylabel("Runtime [s]")
+                plt.legend()
+                savepath = join(
+                    _FOLDER,
+                    "plots",
+                    f"runtime_par_{dataset_names_svd[i]}_{method_names[o]}.png",
                 )
                 plt.savefig(savepath)
