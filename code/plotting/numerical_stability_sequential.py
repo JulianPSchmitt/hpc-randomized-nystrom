@@ -106,23 +106,23 @@ if __name__ == "__main__":
     methods = [lambda x: fast_SRHT(x[1], x[0]).T]
     method_names = ["SRHT-seq"]
 
-    # # Mnist dataset
-    # MNIST_X_path = join(_FOLDER, "data", "MNISTtrain.npy")
-    # X = np.load(MNIST_X_path)
-    # A = rbf_kernel(X=X, n=n, c=1e4)
-    # all_As.append(A)
-    # dataset_names.append("RBF-MNIST")
+    # Mnist dataset
+    MNIST_X_path = join(_FOLDER, "data", "MNISTtrain.npy")
+    X = np.load(MNIST_X_path)
+    A = rbf_kernel(X=X, n=n, c=1e4)
+    all_As.append(A)
+    dataset_names.append("RBF-MNIST")
 
-    # # YearMSD dataset
-    # YEAR_X_path = join(_FOLDER, "data", "YearMSD.npy")
-    # X = np.load(YEAR_X_path)
-    # A = rbf_kernel(X=X, n=n, c=(1e4) ** 2)
-    # all_As.append(A)
-    # dataset_names.append("RBF-YearMSD-1e4")
+    # YearMSD dataset
+    YEAR_X_path = join(_FOLDER, "data", "YearMSD.npy")
+    X = np.load(YEAR_X_path)
+    A = rbf_kernel(X=X, n=n, c=(1e4) ** 2)
+    all_As.append(A)
+    dataset_names.append("RBF-YearMSD-1e4")
 
-    # A = rbf_kernel(X=X, n=n, c=(1e5) ** 2)
-    # all_As.append(A)
-    # dataset_names.append("RBF-YearMSD-1e5")
+    A = rbf_kernel(X=X, n=n, c=(1e5) ** 2)
+    all_As.append(A)
+    dataset_names.append("RBF-YearMSD-1e5")
 
     # Synthetic datasets
     test_matrix_path = join(
@@ -131,10 +131,10 @@ if __name__ == "__main__":
         "test_matricies_8192.npy",
     )
     test_matricies = np.load(test_matrix_path)
-    # A_pol = test_matricies[0]
-    # print(f"Going to pol with shape: {A_pol.shape}")
-    # all_As.append(A_pol)
-    # dataset_names.append("Pol-R10-p1")
+    A_pol = test_matricies[0]
+    print(f"Going to pol with shape: {A_pol.shape}")
+    all_As.append(A_pol)
+    dataset_names.append("Pol-R10-p1")
     A_exp = test_matricies[1]
     all_As.append(A_exp)
     dataset_names.append("Exp-R10-q0.25")
