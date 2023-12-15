@@ -7,6 +7,7 @@ from numpy.linalg import norm
 import matplotlib.pyplot as plt
 from randomized_nystrom import (
     rand_nystrom_cholesky_parallel,
+    rand_nystrom_svd_parallel,
 )
 from mpi4py import MPI
 from os.path import join
@@ -22,6 +23,7 @@ def relative_error_rank_parallel(
     ks: list[int],
     comm: MPI.Comm,
     sketching_mode: str,
+    cholesky: bool = False,
     seed: int = 2002,
     ax=None,
     normAnuc=None,
@@ -34,15 +36,26 @@ def relative_error_rank_parallel(
     if rank == 0:
         pbar = tqdm(total=len(ks))
     for i, k in enumerate(ks):
-        U, S = rand_nystrom_cholesky_parallel(
-            A,
-            n=n,
-            l=l,
-            truncate_rank=k,
-            comm=comm,
-            seed=seed,
-            sketching_mode=sketching_mode,
-        )
+        if cholesky:
+            U, S = rand_nystrom_cholesky_parallel(
+                A,
+                n=n,
+                l=l,
+                truncate_rank=k,
+                comm=comm,
+                seed=seed,
+                sketching_mode=sketching_mode,
+            )
+        else:
+            U, S = rand_nystrom_svd_parallel(
+                A,
+                n=n,
+                l=l,
+                truncate_rank=k,
+                comm=comm,
+                seed=seed,
+                sketching_mode=sketching_mode,
+            )
         if rank == 0:
             A_nyst = U @ S @ U.T
             errs[i] = norm(A - A_nyst, "nuc") / normAnuc
@@ -67,6 +80,7 @@ def compare_relative_error_sketching_parallel(
     sketching_mode: str,
     ls: list[int] = [600, 1000, 2000],
     ks: list[int] = [200, 300, 400, 500, 600],
+    cholesky: bool = True,
     seed: int = 2002,
     ax=None,
     title="Nystrom RBF approximation",
@@ -111,6 +125,7 @@ def compare_relative_error_sketching_parallel(
             ks=ks_this,
             comm=comm,
             sketching_mode=sketching_mode,
+            cholesky=cholesky,
             seed=seed,
             ax=ax,
             normAnuc=normAnuc,
@@ -176,14 +191,18 @@ if __name__ == "__main__":
     A_pol = test_matricies[0]
     all_As.append(A_pol)
     dataset_names.append("Pol-R10-p1")
-    # # Currently exponential does not work with cholesky...
-    # A_exp = test_matricies[1]
-    # all_As.append(A_exp)
-    # dataset_names.append("Exp-R10-q0.25")
+    A_exp = test_matricies[1]
+    all_As.append(A_exp)
+    dataset_names.append("Exp-R10-q0.25")
 
     # From here we generate plots for all A and all methods
     for i, A in enumerate(all_As):
         for o, method in enumerate(methods):
+            if dataset_names[i] == "Exp-R10-q0.25":
+                cholesky = False
+            else:
+                cholesky = True
+
             ax = compare_relative_error_sketching_parallel(
                 A,
                 n=n,
@@ -191,6 +210,7 @@ if __name__ == "__main__":
                 sketching_mode=method,
                 ls=ls,  # [600, 1000]
                 ks=ks,  # [16, 32, 64, 128, 256],  # [200, 400, 600]
+                cholesky=cholesky,
                 title=(
                     f"Nystrom error {dataset_names[i]}, Omega from"
                     f" {method_names[o]}"

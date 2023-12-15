@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
-from randomized_nystrom import rand_nystrom_cholesky
+from randomized_nystrom import rand_nystrom_cholesky, rand_nystrom_svd
 from os.path import join
 from mnist import build_A
 from tqdm import tqdm
@@ -9,13 +9,18 @@ from srht import fast_SRHT
 from __init__ import _FOLDER
 
 
-def relative_error_rank(A, Omega, ks, ax=None, normAnuc=None, **plt_kwargs):
+def relative_error_rank(
+    A, Omega, ks, cholesky=False, ax=None, normAnuc=None, **plt_kwargs
+):
     if normAnuc is None:
         normAnuc = norm(A, "nuc")
 
     errs = [None for _ in range(len(ks))]
     for i, k in tqdm(enumerate(ks), total=len(ks)):
-        U, S = rand_nystrom_cholesky(A, Omega, rank=k)
+        if cholesky:
+            U, S = rand_nystrom_cholesky(A, Omega, rank=k)
+        else:
+            U, S = rand_nystrom_svd(A, Omega, rank=k)
         A_nyst = U @ S @ U.T
 
         errs[i] = norm(A - A_nyst, "nuc") / normAnuc
@@ -36,6 +41,7 @@ def compare_relative_error_sketching(
     method=np.random.random,
     ls=[600, 1000, 2000],
     ks=[200, 300, 400, 500, 600],
+    cholesky: bool = True,
     ax=None,
     title="Nystrom RBF approximation",
     savepath=None,
@@ -70,6 +76,7 @@ def compare_relative_error_sketching(
             A=A,
             Omega=Omega,
             ks=ks_this,
+            cholesky=cholesky,
             ax=ax,
             normAnuc=normAnuc,
             **plotting_kwargs,
@@ -128,18 +135,24 @@ if __name__ == "__main__":
     print(f"Going to pol with shape: {A_pol.shape}")
     all_As.append(A_pol)
     dataset_names.append("Pol-R10-p1")
-    # A_exp = test_matricies[1]
-    # all_As.append(A_exp)
-    # dataset_names.append("Exp-R10-q0.25")
+    A_exp = test_matricies[1]
+    all_As.append(A_exp)
+    dataset_names.append("Exp-R10-q0.25")
 
     # From here we generate plots for all A and all methods
     for i, A in enumerate(all_As):
         for o, method in enumerate(methods):
+            if dataset_names[i] == "Exp-R10-q0.25":
+                cholesky = False
+            else:
+                cholesky = True
+
             ax = compare_relative_error_sketching(
                 A,
                 method=method,
                 ls=ls,
                 ks=ks,
+                cholesky=cholesky,
                 title=(
                     f"Nystrom error {dataset_names[i]}, Omega from"
                     f" {method_names[o]}"
