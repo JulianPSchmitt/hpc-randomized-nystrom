@@ -73,7 +73,7 @@ In this section, we describe the construction of the sketching matrix $\Omega \i
     holds with probability $1 - \delta$.
 \end{definition}
 
-For the randomized Nyström approximation, we considered two different sketching techniques: the block \textit{Subsampled Randomized Hadamard Transform} (BSRHT) and a \textit{Short-Axis-Sparse Sketching Operator} (SASO). Both are sparse and structured random matrices which aim to reduce the computational costs of the matrix-matrix product $A \Omega$.
+For the randomized Nyström approximation, we considered two different sketching techniques: the \textit{block Subsampled Randomized Hadamard Transform} (BSRHT) and a \textit{Short-Axis-Sparse Sketching Operator} (SASO). Both are sparse and structured random matrices which aim to reduce the computational costs of the matrix-matrix product $A \Omega$.
 
 The BSRHT is a version of the Subsampled Randomized Hadamard Transform (SRHT) specifically designed for distributed architectures. For $n$ being a power of two, the SRHT can be defined as
 \begin{align*}
@@ -139,7 +139,7 @@ with $0 < \epsilon < 1$ and $0 < \delta < 1$. This implies compatability with al
 
 For the construction of the SASO, we call the rows of $\Omega$ \textit{short-axis vectors} since $l \ll n$. These short-axis vectors should be independent of one another and have a small, fixed number of non-zero elements. In general, there are different ways of selecting the locations of the non-zero elements. We decided to sample $k$ indices uniformly from $[l]$ without replacement, once for each row. Furthermore, the values of the non-zeros are drawn independently and uniformly from $[-2,-1] \cup [1, 2]$. Compared to i.i.d. Rademachers this can protect against the possibility of a given column of $\Omega$ being orthogonal to a row of $A$ \cite{murray2023}. Finally, we set $k = \min\{8, l\}$ following experimental results metioned in \cite{murray2023}.
 
-\section{Parallelization of the Nyström Algorithm}
+\section{Parallelization of the Nyström Algorithm}\label{sec:parallel_nystrom}
 Having seen the (sequential) randomized Nyström approximation in Algorithm \ref{algo:nyström}, we focus now on the corresponding parallelization for a distributed system. For $A \in \mathbb{R}^{n \times n}$ and $\Omega \in \mathbb{R}^{n \times l}$, the Nyström approximation can be divided into 4 steps:
 \begin{enumerate}
     \item Sketching: $C = A \Omega \in \mathbb{R}^{n \times l}, B = \Omega^T C \in \mathbb{R}^{l \times l}$
@@ -237,33 +237,139 @@ A=\text{diag}(\underbrace{1,...,1}_R,10^{-q}, 10^{-2q}, ..., 10^{-(n-R)q})\in\ma
 \end{equation*}
 The parameter $q>0$ again controls the rate of decay, now of the exponentially decaying singular values. To match the datasets in \cite{tropp2017fixedrank}, we set $R=10$, $p=1$, and $q=0.25$ for all experiments, also matching the real datasets in size by setting $n=8.192$, leading to two synthetic datasets.
 
-\section{Numerical Stability}
+\section{Numerical Stability} \label{sec:num_stability}
 %  An investigation of the numerical stability of randomized Nystr¨om. For the data sets described in section 2.1, you should provide graphs that display the error of the low rank approximation in terms of nuclear norm (norm(A, 'nuc')). The error to be studied experimentally is kA−[[ANyst]]kk∗/kAk∗. The discussion should compare as well the accuracy obtained for the two different sketching matrices by taking into consideration the sketching dimension. This investigation should be done on the data sets provided in 2.1. Additional data could be provided but is not required.
 
 The numerical performance is tested on the datasets described in \ref{sec:datasets}. The performance is measured using the relative error with the nuclear norm,
 \begin{equation}
     \textit{Relative error is: } \frac{||A-\llbracket A_{nyst}\rrbracket_k||_*}{||A||_*}.
 \end{equation}
-Since the nuclear norm is the sum of the singular values, $||A||_*=\sigma_1(A)+...+\sigma_n(A)$, this value describes the ratio of the sum of the singular values from the approximation error of $\llbracket A_{nyst}\rrbracket_k$, compared to the original matrix $A$. If this value is low, we have a good low-rank approximation of $A$.
+Since the nuclear norm is the sum of the singular values, $||A||_*=\sigma_1(A)+...+\sigma_n(A)$, this value describes the ratio of the sum of the singular values from the approximation error of $\llbracket A_{nyst}\rrbracket_k$, compared to the original matrix $A$. If this value is low, we have a good low-rank approximation of $A$. \newline
+
+We used the parallel randomized Nyström with Cholesky for all datasets except for the exponential synthetic dataset. For this dataset, Cholesky failed with the error message that $B$ was a singular matrix. For this dataset, we instead used ***the svd version(what is name of this)***. Because of the performance differences, as seen in section \ref{sec:performance}, we chose to use the svd version only for this dataset.\newline
+
+The relative error for all datasets and both sketching matrices can be seen in figure \ref{fig:RelError}. For all the tests we ran, we could see a monotonic reduction in relative error using a larger size of $l$ or $k$, if the other value was kept fixed. However, when keeping $l$ fixed, even though the relative error was reduced when increasing $k$, we found a reduction in the improvement for each step. That is, we get diminishing returns on the improvement in the relative error when increasing the approximation rank, $k$. \newline
+
+Comparing across the different datasets, we see a big difference in the magnitude of the relative errors. The polynomial dataset (***maybe the exponential when plot is inserted***) has a much larger relative error, compared to all other datasets, and the YearPredictionMSD dataset with $\sigma=10^5$ is significantly better, across all combinations of different hyperparameters. This also shows that for the YearPredictionMSD dataset, the value for $\sigma$ has a much larger impact on the relative error than the values for the sketching dimension or the approximation rank. It seems that datasets created with a smaller standard deviation in the radial basis function, are easier to approximate using the randomized Nyström approximation. (***if we find really good errors for the exponential, say that this is similar to the exponential since RBF kernel is exponential). Another interesting finding across datasets is that when fixing a low approximation error, the difference in relative error when varying the sketching dimension, depended heavily on the initial performance. That is, if we found a low relative error for a low approximation rank, increasing the sketch dimension made little to no difference, but when the initial performance was poor, as with the dataset with polynomial decay, we did see some difference. So if one were to select between increasing the sketch dimension or the approximation rank to get the most improvement in the relative error, the results were not conclusive. However, as a general trend, for a low approximation rank, we found the most improvement by increasing the approximation rank, and for medium to high approximation ranks we found more significant improvements by increasing the sketch dimension.\newline
+
+Comparing across different sketching matrices, we find next to identical results. That is, in our testing, we did not find any significant numerical differences between the two different sketching matrices.
 
 % Relative error plots - describe what we see/have found
-Plots!?????
 
-\section{Performance}
+\begin{figure}
+\centering
+\hfill\begin{subfigure}[t]{\dimexpr0.4\textwidth+20pt\relax}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{MNIST}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/relerror/relerror_RBF-MNIST_SRHT-block.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{YearMSD, $\sigma=10^4$}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/relerror/relerror_RBF-YearMSD-1e4_SRHT-block.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{YearMSD, $\sigma=10^5$}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/relerror/relerror_RBF-YearMSD-1e5_SRHT-block.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{Polynomial decay}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/relerror/relerror_Pol-R10-p1_SRHT-block.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{Exponential decay}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/relerror/relerror_Pol-R10-p1_SRHT-block.png}
+    \caption{$\Omega$ created using BSRHT}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{plots/relerror/relerror_RBF-MNIST_SASO.png}
+    \includegraphics[width=\textwidth]{plots/relerror/relerror_RBF-YearMSD-1e4_SASO.png}
+    \includegraphics[width=\textwidth]{plots/relerror/relerror_RBF-YearMSD-1e5_SASO.png}
+    \includegraphics[width=\textwidth]{plots/relerror/relerror_Pol-R10-p1_SASO.png}
+    \includegraphics[width=\textwidth]{plots/relerror/relerror_Pol-R10-p1_SASO.png}
+    \caption{$\Omega$ created using SASO}
+\end{subfigure}\hfill
+\caption{Relative error of the Nyström algorithm. (LAST PLOT SHOULD BE CHANGED TO EXP WHEN READY!!!!!!!)}
+\label{fig:RelError}
+\end{figure}
+
+\section{Performance} \label{sec:performance}
+
+We evaluated the runtime of the randomized Nyström algorithm on the same parameters as in section \ref{sec:num_stability}. The runtime was measured as the time to do the steps described in section \ref{sec:parallel_nystrom}, and thus does not include the time to generate the positive semi-definite matrix $A$ from the data $X$. To quantify the variation in runtimes, all tests were run 3 times, and the plots found in figure \ref{fig:Runtime} show the mean and the standard deviation of the runtimes at the different parameters. For the performance evaluation we executed all algorithms on a single machine with an Intel Core i5 6500 ($4 \times 3.6$ GHz, $6$MB L3 cache) processor and 16 GB of DDR4-RAM powered by Fedora 38 (64-Bit, Linux Kernel $6.5.6$). Furthermore, the algorithms have been implemented in Python $3.11.5$ using NumPy $1.26.0$. The parallelization has been done via the Python implementation \textit{mpi4py} $3.1.4$ of the well-known Message Passing Interface (MPI) (OpenMPI 4.1.4).\newline
+
+We find that the exponential decay dataset is significantly slower than the other datasets. This difference comes down to the difference between the algorithms used, ***and fits with the theory described in section?????***. Besides the difference found between the two algorithms, we found little variation in the runtime across datasets. \newline
+
+When selecting between the sketching dimension and the approximation rank, we see a large difference in runtimes. When increasing the sketching dimension, and thus working with larger sketched matrices $B$ and $C$, it takes significantly longer to run the approximation. We consistently saw an increase of runtime of more than a factor 3 when doubling the sketching dimension from $1000$ to $2000$. We also found that the increase in runtime when increasing the sketch dimension was larger than any of our increases in the approximation rank. It should also be noted that the difference in runtime across the approximation rank only affects the final step described in section \ref{sec:parallel_nystrom}, where the rank-k truncated SVD is calculated, and the $\llbracket A_{Nyst}\rrbracket_k$ is calculated.
 
 % No Q vs Q version. Describe our choice
 % Runtime plots - describe what we see/have found
 
+\begin{figure}
+\centering
+\hfill\begin{subfigure}[t]{\dimexpr0.4\textwidth+20pt\relax}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{MNIST}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/runtime/runtime_par_RBF-MNIST_SRHT-block.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{YearMSD, $\sigma=10^4$}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/runtime/runtime_par_RBF-YearMSD-1e4_SRHT-block.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{YearMSD, $\sigma=10^5$}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/runtime/runtime_par_RBF-YearMSD-1e5_SRHT-block.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{Polynomial decay}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/runtime/runtime_par_Pol-R10-p1_SRHT-block.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{Exponential decay}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/runtime/runtime_par_Pol-R10-p1_SRHT-block.png}
+    \caption{$\Omega$ created using BSRHT}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{plots/runtime/runtime_par_RBF-MNIST_SASO.png}
+    \includegraphics[width=\textwidth]{plots/runtime/runtime_par_RBF-YearMSD-1e4_SASO.png}
+    \includegraphics[width=\textwidth]{plots/runtime/runtime_par_RBF-YearMSD-1e5_SASO.png}
+    \includegraphics[width=\textwidth]{plots/runtime/runtime_par_Pol-R10-p1_SASO.png}
+    \includegraphics[width=\textwidth]{plots/runtime/runtime_par_Pol-R10-p1_SASO.png}
+    \caption{$\Omega$ created using SASO}
+\end{subfigure}\hfill
+\caption{Runtime of the Nyström algorithm. (LAST PLOT SHOULD BE CHANGED TO EXP WHEN READY!!!!!!!)}
+\label{fig:Runtime}
+\end{figure}
+
 \section{Approximation of leading Singular Values}
+
+In this section, we address the question whether the leading $k$ singular values of $A$ can be approximated using $[\![A_{Nystr}]\!]_k$. In particular, we compare the largest $k$ singular values of $A$ and $[\![A_{Nystr}]\!]_k$ (ordered in non-increasingly) and measure their difference in terms of the ratio
+\begin{align}
+    \label{eq:singularValueError}
+    \text{error}_{\sigma_i} := \frac{\sigma_i([\![A_{Nystr}]\!]_k)}{\sigma_i(A)}
+    \quad \forall i \in [k].
+\end{align}
+
+Figure \ref{} shows the results obtained for our four test matrices/datasets (MNIST, YearPredictionMSD, Polynomial Decay, Exponential Decay). The plots display the ratio (\ref{eq:singularValueError}) computed by SVD for the approximation rank $k=400$ and different sketching dimensions $l \in \{400, 600, 1000, 2000\}$.
+
 
 % Create a plot where we find the true first k singular values, and the k singular values of the Nyström approx. We can then subtract them to get k different error values, whereby we can easily see the minimum and maximum error (and how it evolves throughout k) of the approximation to the true. This can be done for all the different datasets, and for a single choice of l and k.
 
 \section{Conclusion}
 
+\clearpage{}
+% Moved bibliography above appendix
+\printbibliography{} % print bibliography
 \clearpage
 \begin{appendices}
+\section{Sequential Nyström}
+\begin{figure}
+\centering
+\hfill\begin{subfigure}[t]{\dimexpr0.35\textwidth+20pt\relax}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{MNIST}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/runtime/runtime_RBF-MNIST_SRHT-seq.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{YearMSD, $\sigma=10^4$}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/runtime/runtime_RBF-YearMSD-1e4_SRHT-seq.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{YearMSD, $\sigma=10^5$}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/runtime/runtime_RBF-YearMSD-1e5_SRHT-seq.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{Polynomial decay}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/runtime/runtime_Pol-R10-p1_SRHT-seq.png}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{Exponential decay}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/runtime/runtime_Pol-R10-p1_SRHT-seq.png}
+    \caption{Serial runtime}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.35\textwidth}
+    \includegraphics[width=\textwidth]{plots/relerror/relerror_RBF-MNIST_SRHT-seq.png}
+    \includegraphics[width=\textwidth]{plots/relerror/relerror_RBF-YearMSD-1e4_SRHT-seq.png}
+    \includegraphics[width=\textwidth]{plots/relerror/relerror_RBF-YearMSD-1e5_SRHT-seq.png}
+    \includegraphics[width=\textwidth]{plots/relerror/relerror_Pol-R10-p1_SRHT-seq.png}
+    \includegraphics[width=\textwidth]{plots/relerror/relerror_Pol-R10-p1_SRHT-seq.png}
+    \caption{Relative error}
+\end{subfigure}\hfill
+\caption{Runtime and relative error of the sequential version of the randomized Nyström algorithm. For these plots, $\Omega$ was generated with SRHT. Created for comparison with figure \ref{fig:RelError} and \ref{fig:Runtime}(LAST PLOT SHOULD BE CHANGED TO EXP WHEN READY!!!!!!!)}
+\label{fig:SequentialPerformance}
+\end{figure}
 \end{appendices}
 
-\printbibliography{} % print bibliography
 
 \end{document}
