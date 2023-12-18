@@ -6,6 +6,8 @@ from os.path import join
 from mnist import build_A
 from tqdm import tqdm
 from srht import fast_SRHT
+from saso import SASO
+from mpi4py import MPI
 from __init__ import _FOLDER
 
 
@@ -103,8 +105,15 @@ if __name__ == "__main__":
     ks = [100, 200, 350, 500, 700, 900]  # [15, 30, 60, 120, 240]
     all_As = []
     dataset_names = []
-    methods = [lambda x: fast_SRHT(x[1], x[0]).T]
-    method_names = ["SRHT-seq"]
+    comm = MPI.COMM_WORLD
+    assert (
+        comm.Get_size() == 1
+    ), "This plotting code should be run with p=1 processor!"
+    methods = [
+        lambda x: fast_SRHT(x[1], x[0]).T,
+        lambda x: SASO(x[1], x[0], comm).T,
+    ]
+    method_names = ["SRHT-seq", "SASO-seq"]
 
     # Mnist dataset
     MNIST_X_path = join(_FOLDER, "data", "MNISTtrain.npy")
