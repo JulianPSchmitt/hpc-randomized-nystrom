@@ -42,13 +42,17 @@ We used \cite{golub2013a}.
 *** clearly missing something...???***
 
 \section{Randomized Nyström Algorithm}\label{sec:rand_nystrom_alg}
-In this section, we describe the efficient computation of a rank-k approximation from the sketching formula (\ref{nyst:sketching_formula}). We obtain such an approximation by simply truncating the \textit{singular value decomposition} (SVD) of $A_{Nyst}$. In literature, this method is also called \textit{modified fixed-rank Nyström via $QR$}. However, instead of calculating the entire SVD of $A_{Nyst}$ and throwing away the rows and columns we do not need, if $k<l$, we compute the partial SVD, extracting only the $k$ singular values of the largest magnitude \cite{scipy_svds}. Algorithm \ref{algo:nyström} shows a way for computing $[A_{Nyst}]_k$. The algebra behind the algorithm is the following: Let $C = A \Omega$ and $B = \Omega^T A \Omega$. Furthermore, we write $B = LL^T$ for the Cholesky decomposition of $B$, $Z = C L^{-T} = QR$ for the $QR$ decomposition of $C L^{-T}$ and $R = U_k \Sigma_k V_k^T$ for the truncated SVD of $R$. Now, we obtain
+In this section, we describe the efficient computation of a rank-k approximation from the sketching formula (\ref{nyst:sketching_formula}). We obtain such an approximation by simply truncating the \textit{singular value decomposition} (SVD) of $A_{Nyst}$. In the following, we denote this truncation by $[\![A_{Nyst}]\!]_k$. Note that this method is also called \textit{modified fixed-rank Nyström via $QR$} in literature. However, instead of calculating the entire SVD of $A_{Nyst}$ and throwing away the rows and columns we do not need, if $k<l$, we compute the partial SVD, extracting only the $k$ singular values of the largest magnitude \cite{scipy_svds}. Algorithm \ref{algo:nyström} shows a way for computing $[\![A_{Nyst}]\!]_k$. The algebra behind the algorithm is the following: Let $C = A \Omega$ and $B = \Omega^T A \Omega$. Furthermore, we write $B = LL^T$ for the Cholesky decomposition of $B$, $Z = C L^{-T} = QR$ for the $QR$ decomposition of $C L^{-T}$ and $R = U_k \Sigma_k V_k^T$ for the truncated SVD of $R$. Now, we obtain
 \begin{align*}
     A_{Nyst} = (A \Omega) (\Omega^T A \Omega)^+ (\Omega^T A) &= CL^{-T}L^{-1}C^T = ZZ^T \\
     &= QRR^TQ^T = QU_k\Sigma_k \Sigma_k^T U_k^TQ^T = QU_k\Sigma_k^2 U_k^TQ^T.
 \end{align*}
- Note that in step 7 of Algorithm \ref{algo:nyström}, instead of computing $\hat{U}_k$ as $Q U_k$ we could use $\hat{U}_k = Z V_k \Sigma_k^{-1}$, which would provide less numerical stability but entail a smaller computational cost. In particular, one could omit the computation of the $Q$-factor of the $QR$ decomposition. Moreover, it is important to mention that the matrix $B = \Omega^T A \Omega$ can be rank-deficient, e.g. if the rank of $A$ or $\Omega$ is smaller than $l$. In this case, it is not possible to obtain the Cholesky factorization in step 3. Instead, one can use the square root of an SVD or the eigendecomposition of $\Omega^T A \Omega$. Finally, we remark that Algorithm \ref{algo:nyström} is a is a \textit{streaming} algorithm since it requires only one pass over the data or $A$, respectively. This is a major advantage compared to e.g. the randomized singular value decomposition.
-\begin{algorithm}[H]
+ Note that in step 7 of Algorithm \ref{algo:nyström}, instead of computing $\hat{U}_k$ as $Q U_k$ we could use $\hat{U}_k = Z V_k \Sigma_k^{-1}$, which would provide less numerical stability but entail a smaller computational cost. In particular, one could omit the computation of the $Q$-factor of the $QR$ decomposition. However, in practice we observed that computing $\hat{U}_k$ as $Z V_k \Sigma_k^{-1}$ reduces the runtime of our algorithm by not more than 10\%. One reason for this might be that we worked with $n=2^{13}$ and accordingly $Z \in \mathbb{R}^{8192 \times l}$ is still relatively small. For larger dimensions it could be worth it to consider $\hat{U}_k = Z V_k \Sigma_k^{-1}$, but we decided to focus on $\hat{U}_k = Q U_k$ in this report.
+ 
+ Moreover, it is important to mention that the matrix $B = \Omega^T A \Omega$ can be rank-deficient, e.g. if the rank of $A$ or $\Omega$ is smaller than $l$. In this case, it is not possible to obtain the Cholesky factorization in step 3. Instead, one can use the square root of $\Omega^T A \Omega$ computed via the SVD or eigendecomposition: Let $B = U \Sigma V^T$ be the SVD of $B$. Since $B$ is symmetric and non-negative definite, it holds $V = U$. We simply set $L = U \sqrt{\Sigma} V^T$ and obtain $LL^T = U \sqrt{\Sigma} V^T V \sqrt{\Sigma} U^T = U \Sigma U^T = U \Sigma V^T = B$. Note that the SVD based approach is accompanied by considerably higher computational costs compared to the Cholesky decomposition. Not only is it more expensive to calculate the SVD, but additionally the matrix product $L = U \sqrt{\Sigma} V^T$ must be determined. Further, when using the Cholesky decomposition, one can exploit the fact that $L$ is triangular and calculate $Z = C L^{-T}$ via backward substitution which implies\footnote{'$\dot{=}$' indicates equality when omitting lower-order terms} \# flops $\dot{=}\ l^2$. In contrast, when using the SVD one has to solve a general linear system which does not perform better than $O(l^3)$. Although there are alternatives, e.g. making $A$ full-rank by shifting \cite{tropp2017fixedrank}, we will stick to the SVD approach.
+ 
+ Finally, we remark that Algorithm \ref{algo:nyström} is a is a \textit{streaming} algorithm since it requires only one pass over the data or $A$, respectively. This is a major advantage compared to e.g. the randomized singular value decomposition.
+\begin{algorithm}[t]
     \caption{Randomized Nyström} \label{algo:nyström}
     \begin{algorithmic}[1]
         \Require $A \in \mathbb{R}^{n \times n}, \Omega \in \mathbb{R}^{n \times l}$
@@ -373,7 +377,39 @@ In this section, we address the question of whether the leading $k$ singular val
     \quad \forall i \in [k].
 \end{align}
 
-Figure \ref{} shows the results obtained for our four test matrices/datasets (MNIST, YearPredictionMSD, Polynomial Decay, Exponential Decay). The plots display the ratio (\ref{eq:singularValueError}) computed by SVD for the approximation rank $k=400$ and different sketching dimensions $l \in \{400, 600, 1000, 2000\}$.
+Figure \ref{fig:singularValueRatios} shows the results obtained for our four test matrices/datasets (MNIST, YearPredictionMSD, Polynomial Decay, Exponential Decay). The plots display the ratio (\ref{eq:singularValueError}) computed by SVD for the approximation rank $k=400$ and different sketching dimensions $l \in \{400, 600, 1000, 2000\}$.
+
+\begin{figure}
+\centering
+\hfill\begin{subfigure}[t]{\dimexpr0.4\textwidth+20pt\relax}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{MNIST}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/singular_values/singular_values_RBF-MNIST.png}
+\end{subfigure}\hspace{3ex}
+\begin{subfigure}[t]{\dimexpr0.4\textwidth+20pt\relax}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{YearMSD, $\sigma=10^4$}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/singular_values/singular_values_RBF-YearMSD-1e4.png}
+\end{subfigure}\hfill
+\caption{Singular values of MNIST and YearPredictionMSD.}
+\label{fig:singularValue}
+\end{figure}
+
+\begin{figure}
+\centering
+\hfill\begin{subfigure}[t]{\dimexpr0.4\textwidth+20pt\relax}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{MNIST}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/singular_values/singular_values_RBF-MNIST_SRHT-block.pdf}
+    \makebox[20pt]{\raisebox{65pt}{\rotatebox[origin=c]{90}{YearMSD, $\sigma=10^4$}}}%
+    \includegraphics[width=\dimexpr\linewidth-20pt\relax]{plots/singular_values/singular_values_RBF-YearMSD-1e4_SRHT-block.pdf}
+    \caption{$\Omega$ created using BSRHT}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{plots/singular_values/singular_values_RBF-MNIST_SASO.pdf}
+    \includegraphics[width=\textwidth]{plots/singular_values/singular_values_RBF-YearMSD-1e4_SASO.pdf}
+    \caption{$\Omega$ created using SASO}
+\end{subfigure}\hfill
+\caption{Relative error of Singular Values.}
+\label{fig:singularValueRatios}
+\end{figure}
 
 
 % Create a plot where we find the true first k singular values, and the k singular values of the Nyström approx. We can then subtract them to get k different error values, whereby we can easily see the minimum and maximum error (and how it evolves throughout k) of the approximation to the true. This can be done for all the different datasets, and for a single choice of l and k.

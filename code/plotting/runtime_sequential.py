@@ -4,15 +4,14 @@ from os import environ
 environ["OMP_NUM_THREADS"] = "1"
 import numpy as np
 import matplotlib.pyplot as plt
-from randomized_nystrom import (
-    rand_nystrom_cholesky,
-    rand_nystrom_svd
-)
+from randomized_nystrom import rand_nystrom_cholesky, rand_nystrom_svd
 from os.path import join
 from mnist import build_A
 from tqdm import tqdm
 from srht import fast_SRHT
 from time import time
+from saso import SASO
+from mpi4py import MPI
 from __init__ import _FOLDER
 
 
@@ -84,10 +83,15 @@ if __name__ == "__main__":
     As_svd = []
     dataset_names_cholesky = []
     dataset_names_svd = []
+    comm = MPI.COMM_WORLD
+    assert (
+        comm.Get_size() == 1
+    ), "This plotting code should be run with p=1 processor!"
     methods = [
-        lambda x: fast_SRHT(x[1], x[0]).T
-    ]  # , np.random.random # gaussian not always lead to pos. definite matrices...
-    method_names = ["SRHT-seq"]  # , "Gaussian"
+        lambda x: fast_SRHT(x[1], x[0]).T,
+        lambda x: SASO(x[1], x[0], comm).T,
+    ]
+    method_names = ["SRHT-seq", "SASO-seq"]
     ls = [400, 600, 1000, 2000]  # [64, 128, 256]
     ks = [100, 200, 350, 500, 700, 900]  # [15, 30, 60, 120, 240]
 
@@ -120,7 +124,7 @@ if __name__ == "__main__":
     print(f"Going to pol with shape: {A_pol.shape}")
     As_cholesky.append(A_pol)
     dataset_names_cholesky.append("Pol-R10-p1")
-    A_exp = test_matricies[1] # Currently exponential does not work with chol.
+    A_exp = test_matricies[1]  # Currently exponential does not work with chol.
     As_svd.append(A_exp)
     dataset_names_svd.append("Exp-R10-q0.25")
 
@@ -150,8 +154,8 @@ if __name__ == "__main__":
                     c="krbgy"[j],
                 )
             plt.title(
-                f"Sequential runtime for {dataset_names_cholesky[i]}, Omega from"
-                f" {method_names[o]}"
+                f"Sequential runtime for {dataset_names_cholesky[i]}, Omega"
+                f" from {method_names[o]}"
             )
             plt.xlabel("Approximation rank")
             plt.ylabel("Runtime [s]")
