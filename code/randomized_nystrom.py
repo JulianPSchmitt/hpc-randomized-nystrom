@@ -16,8 +16,8 @@ def rand_nystrom_svd(A, Omega, rank):
     """
     C = A @ Omega
     B = Omega.T @ C
-    Ub, Sb = linalg.svd(B)[0:2]
-    L = Ub@np.diag(np.sqrt(Sb))
+    Ub, Sb, Vb = linalg.svd(B)
+    L = Ub@np.diag(np.sqrt(Sb))@Vb
     Z = np.linalg.solve(L, C.T).T
     Q, R = np.linalg.qr(Z)
     if min(R.shape) == rank:
@@ -98,8 +98,8 @@ def rand_nystrom_svd_parallel(
     # Solve a triangular system using row-block distribution of C
     L = np.zeros((l, l))
     if rank == 0:
-        Ub, Sb = linalg.svd(B)[0:2]
-        L = Ub@np.diag(np.sqrt(Sb))
+        Ub, Sb, Vb = linalg.svd(B)
+        L = Ub@np.diag(np.sqrt(Sb))@Vb
     comm.Bcast(L, root=0)
     Z = np.linalg.solve(L, C.T).T
 
