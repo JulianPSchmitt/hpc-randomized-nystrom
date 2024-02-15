@@ -3,6 +3,7 @@ dist/
 *.pyc
 alt_srht.py
 data/*
+.venv
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
