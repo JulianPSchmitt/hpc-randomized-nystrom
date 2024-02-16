@@ -10,7 +10,7 @@ from randomized_nystrom import (
 )
 from mpi4py import MPI
 from os.path import join
-from mnist import build_A
+from data import rbf
 from tqdm import tqdm
 from time import time
 from __init__ import _FOLDER
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         X = X[:n, :]
         if rank == 0:
             print(f"Shape: {X.shape}")
-        A = build_A(X, c=c, save=False)
+        A = rbf(X, c=c, savepath=None)
         return A
 
     n = 2**13
