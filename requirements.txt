@@ -1,3 +1,4 @@
+antlr4-python3-runtime==4.9.3
 contourpy==1.2.0
 cycler==0.12.1
 fonttools==4.48.1
@@ -5,12 +6,14 @@ kiwisolver==1.4.5
 matplotlib==3.8.3
 mpi4py==3.1.5
 numpy==1.26.4
+omegaconf==2.3.0
 packaging==23.2
 pandas==2.2.0
 pillow==10.2.0
 pyparsing==3.1.1
 python-dateutil==2.8.2
 pytz==2024.1
+PyYAML==6.0.1
 scipy==1.12.0
 six==1.16.0
 tqdm==4.66.2
