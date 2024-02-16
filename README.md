@@ -35,46 +35,33 @@ YearPredictionMSD.
 
 ### Setup Datasets and Python Code
 
-To obtain the Nyström approximation for the first $n$ rows of the datasets
-mentioned above, one can follow the steps below. The steps are shown using the
-MNIST data set as an example but are similar for the other datasets.
+To install the required Python packages and dependencies, simply execute the
+following from the root directory:
 
-1. (Optional) Using Python 3.12.1, one can install the required
-   packages/dependencies from the project's root directory by executing:
+```console
+pip install -r requirements.txt
+pip install -e .
+```
 
-    ```console
-    pip install -r requirements.txt
-    ```
+For the synthetic datasets, we provide Python functions that generate the
+corresponding matrices. For MNIST and YearPredictionMSD, one has to download the
+datasets and map the first $n$ rows into a separate file where $n$ must be a
+power of two. (This can always be achieved by zero-padding.) The necessary
+commands are shown below for the MNIST data set and $n=2048$ but are similar for
+YearPredictionMSD.
 
-2. The MNIST dataset can be obtained by the commands below:
+```console
+# Create a directory for the data
+mkdir -p data/mnist
+cd data/mnist
 
-    ```console
-    # Create a directory for the data
-    mkdir -p data/mnist
-    cd data/mnist
+# Download and extract the dataset
+wget https://www.csie.ntu.edu.tw/\~cjlin/libsvmtools/datasets/multiclass/mnist.scale.bz2
+bzip2 -d mnist.scale.bz2
 
-    # Download and extract the dataset
-    wget https://www.csie.ntu.edu.tw/\~cjlin/libsvmtools/datasets/multiclass/mnist.scale.bz2
-    bzip2 -d mnist.scale.bz2
-
-    # Obtain the first 2048 rows of the dataset
-    head -n 2048 mnist.scale > mnist_780
-    ```
-
-3. To compute the Nyström approximation for the MNIST dataset sequentially on a
-   single processor, run the following with desired arguments:
-
-    ```console
-    python code/data.py dataset=MNIST
-    ```
-
-All steps for all 4 datasets are implemented in [run.sh](./run.sh). Moreover,
-the script computes the Nyström approximations and outputs the corresponding
-approximation error.
-
-**Note:** We tested the code only in a Linux environment (Fedora 39, Linux
-Kernel 6.7.4). Furthermore, the MPI code is specifically designed for 4
-processors.
+# Obtain the first 2048 rows of the dataset
+head -n 2048 mnist.scale > mnist_780
+```
 
 ### Usage of the Python CLI
 
@@ -99,11 +86,30 @@ mpiexec -n 4 python [Options...]
 | `input_dim` | `int` | Dimension $n$ (or number of rows) of the `dataset`.  |
 | `sketch_dim` | `int` | Desired dimension $l$ of `sketch` operator. |
 | `truncate_rank` | `int` | Rank $k$ after which $A_{Nystr}$ will be truncated. |
-| `rbf_smooth` | `int` | Smoothing parameter $c$ for RBF kernel.<br/> Only used for MNIST and YEAR_PREDICTION_MSD data. |
-| `effective_rank` | `int` | Effective rank parameter for EXP_DECAY and POLY_DECAY data. |
-| `data_decay` | `float` | Decay parameter for EXP_DECAY and POLY_DECAY data. |
+| `rbf_smooth` | `int` | Smoothing parameter $c$ for RBF kernel. Only used for `MNIST` and `YEAR_PREDICTION_MSD` data. |
+| `effective_rank` | `int` | Effective rank parameter for `EXP_DECAY` and `POLY_DECAY` data. |
+| `data_decay` | `float` | Decay parameter for `EXP_DECAY` and `POLY_DECAY` data. |
 | `variant` | {CHOLESKY, SVD} | Algorithm to compute the pseudo-inverse $(\Omega^T A \Omega)^\dagger$. |
-| `sketch` | {SRHT, SASO} | Sketching operator. Subsampled Randomized Hadamard Transform<br/> or Short Axis Sparse Operator.|
+| `sketch` | {SRHT, SASO} | Sketching operator. Subsampled Randomized Hadamard Transform or Short Axis Sparse Operator.|
+
+For example, one could run:
+
+```console
+python code/data.py \
+        dataset=MNIST \
+        input_dim=2048\
+        sketch_dim=400 \
+        truncate_rank=200 \
+        rbf_smooth=100 \
+        variant=CHOLESKY
+```
+
+Further examples and code to automatically download the datasets is provided in
+[run.sh](./run.sh).
+
+**Note:** We tested the code only in a Linux environment (Fedora 39, Linux
+Kernel 6.7.4). Furthermore, the MPI code is specifically designed for 4
+processors.
 
 ## References
 

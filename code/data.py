@@ -163,7 +163,7 @@ if __name__ == "__main__":
             A = rbf(data, config.rbf_smooth)
         else:
             data, labels = read_yearPredictionMSD(
-                join(_FOLDER, "data", "yearPredictionMSD", "year"))
+                join(_FOLDER, "data", "YearPredictionMSD", "year_780"))
             A = rbf(data, config.rbf_smooth)
 
     # Compute Nyström Approximation sequentially

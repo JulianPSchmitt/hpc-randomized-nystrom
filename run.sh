@@ -4,6 +4,7 @@ IFS=$'\n\t'
 
 # Install required dependencies
 pip install -r requirements.txt
+pip install -e .
 
 # Create a directories for the data
 mkdir -p ./data/mnist
