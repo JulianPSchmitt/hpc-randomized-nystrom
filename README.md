@@ -27,7 +27,7 @@ algorithm that is numerically stable and scales well on a distributed system. In
 particular, the method should be suitable for high-performance computing on a
 computer cluster. Our algorithms are implemented in Python 3 and parallelized
 via the Message Passing Interface (OpenMPI). For further details, see our
-project [report](./report/Project2.pdf).
+project [report](./report/randomized-nystrom.pdf).
 
 ## Datasets
 
