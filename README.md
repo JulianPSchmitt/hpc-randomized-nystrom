@@ -1,5 +1,15 @@
 # Randomized Nyström Low-Rank Approximation
 
+Kernel methods, e.g. support vector machines or Gaussian processes, work with a
+high-dimensional or infinite-dimensional feature map and find an optimal
+splitting hyperplane. Inner products of data points are stored in a kernel
+matrix that serves as a similarity function. The major drawback of these
+algorithms is that the computational cost is at least quadratic in the number of
+training data points but often becomes cubic due to necessary matrix inversions
+or decompositions. To obtain reasonable storage usage and costs for large-scale
+problems, low-rank matrix approximations are essential. One of the most popular
+examples is the (randomized) Nyström approximation.
+
 ## Project Description
 
 In this project, we study the randomized Nyström algorithm for computing a
@@ -11,12 +21,13 @@ Nyström approximation relies on the following formula:
 $$A_{Nyst} = (A \Omega) (\Omega^T A \Omega)^\dagger (\Omega^T A)$$
 
 where $(\Omega^T A \Omega)^\dagger$ denotes the pseudoinverse of $\Omega^T A
-\Omega$. To obtain a rank-$k$ approximation $[[A_{Nyst}]]_k$ with $k\leq l$, we
-compute a rank-$k$ truncation of $A_{Nyst}$. We aim to identify a randomized
-algorithm that is numerically stable and scales well on a distributed system.
-Our algorithms are implemented in Python 3 and parallelized via the Message
-Passing Interface (OpenMPI). For further details, see our project
-[report](./report/Project2.pdf).
+\Omega$. To obtain a rank $k$ approximation $[[A_{Nyst}]]_k$ with $k\leq l$, we
+compute a rank $k$ truncation of $A_{Nyst}$. We aim to identify a randomized
+algorithm that is numerically stable and scales well on a distributed system. In
+particular, the method should be suitable for high-performance computing on a
+computer cluster. Our algorithms are implemented in Python 3 and parallelized
+via the Message Passing Interface (OpenMPI). For further details, see our
+project [report](./report/Project2.pdf).
 
 ## Datasets
 
@@ -80,7 +91,7 @@ For parallel execution on 4 processors run:
 mpiexec -n 4 python [Options...]
 ```
 
-| Argument | Values| Description |
+| Option | Values| Description |
 |----------|-------|-------------|
 | `dataset` | {MNIST,<br/> YEAR_PREDICTION_MSD,<br/> EXP_DECAY,<br/> POLY_DECAY} | Dataset. |
 | `input_dim` | `int` | Dimension $n$ (or number of rows) of the `dataset`.  |
