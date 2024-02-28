@@ -3,7 +3,7 @@ from numpy.linalg import norm
 import matplotlib.pyplot as plt
 from randomized_nystrom import rand_nystrom_cholesky, rand_nystrom_svd
 from os.path import join
-from mnist import build_A
+from data import rbf
 from tqdm import tqdm
 from srht import fast_SRHT
 from saso import SASO
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     def rbf_kernel(X, n, c):
         X = X[:n, :]
         print(f"Shape: {X.shape}")
-        A = build_A(X, c=c, save=False)
+        A = rbf(X, c=c, savepath=None)
         return A
 
     n = 2**13

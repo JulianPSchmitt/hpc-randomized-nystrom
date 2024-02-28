@@ -8,7 +8,7 @@ from randomized_nystrom import (
 )
 from mpi4py import MPI
 from os.path import join
-import mnist
+import data as dt
 from scipy.sparse.linalg import svds
 from tqdm import tqdm
 from __init__ import _FOLDER
@@ -206,8 +206,8 @@ if __name__ == "__main__":
     A = None
     if rank % 2 == 0:
         MNIST_X_path = join(_FOLDER, "data", "mnist", "mnist_780")
-        data, labels = mnist.read_data(MNIST_X_path, save=False)
-        A = mnist.build_A(data, 10**4, save=False)
+        data, labels = dt.read_mnist(MNIST_X_path, savepath=None)
+        A = dt.rbf(data, 10**4, savepath=None)
     all_As.append(A)
     dataset_names.append("RBF-MNIST")
 
@@ -216,12 +216,12 @@ if __name__ == "__main__":
     if rank % 2 == 0:
         data, labels = read_data_year(
             "./data/YearPredictionMSD/year_780", save=False)
-        A = mnist.build_A(data, (1e4) ** 2, save=False)
+        A = dt.rbf(data, (1e4) ** 2, savepath=None)
     all_As.append(A)
     dataset_names.append("RBF-YearMSD-1e4")
 
     if rank % 2 == 0:
-        A = mnist.build_A(data, (1e5) ** 2, save=False)
+        A = dt.rbf(data, (1e5) ** 2, savepath=None)
     all_As.append(A)
     dataset_names.append("RBF-YearMSD-1e5")
 

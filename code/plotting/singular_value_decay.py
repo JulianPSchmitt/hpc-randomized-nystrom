@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from os.path import join
-from mnist import build_A
+from data import rbf
 from tqdm import tqdm
 from __init__ import _FOLDER
 
@@ -11,7 +11,7 @@ if __name__ == "__main__":
     def rbf_kernel(X, n, c):
         X = X[:n, :]
         print(f"Shape: {X.shape}")
-        A = build_A(X, c=c, save=False)
+        A = rbf(X, c=c, savepath=None)
         return A
 
     n = 2**13

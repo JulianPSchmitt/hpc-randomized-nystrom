@@ -2,14 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 from randomized_nystrom import rand_nystrom_cholesky
-from mnist import build_A
+from data import rbf
 from os.path import join
 
 
 def errorplot(X: np.ndarray, n: int, c: float, ls: list[int], ks: list[int]):
     X = X[:n, :]
     print(f"Shape: {X.shape}")
-    A = build_A(X, c=c, save=False)
+    A = rbf(X, c=c, savepath=None)
 
     colors = "krbgy"
 
